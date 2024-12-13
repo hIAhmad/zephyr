@@ -143,19 +143,18 @@ static const struct disk_operations ram_disk_ops = {
 		.buf = UINT_TO_POINTER(DT_REG_ADDR(DT_INST_PHANDLE(n, ram_region))),	\
 	}
 
+/* Include disk image binary data for all enabled RAM disk device instances
+ * that have been configured to use existing disk images as backing stores.
+ */
+#include <ramdisk_diskimages.inc>
+
 #define RAMDISK_DEVICE_CONFIG_DEFINE_DISKIMG(n)                                         \
-	__asm__(".section   " STRINGIFY(.ramdisk_##n) "\n\t"                            \
-		".incbin    \"" DT_INST_PROP(n, zephyr_disk_image_path) "\"\n");        \
-											\
-	extern uint8_t __disk_buf_##n[];                                                \
-	extern uint8_t __disk_buf_size_##n[];                                           \
-	extern uint8_t __disk_buf_sector_count_##n[];                                   \
-											\
 	static struct ram_disk_config disk_config_##n = {				\
 		.sector_size = DT_INST_PROP(n, sector_size),				\
-		.sector_count = (size_t)__disk_buf_sector_count_##n,			\
-		.size = (size_t)__disk_buf_size_##n,					\
-		.buf = __disk_buf_##n,							\
+		.sector_count = UTIL_CAT(DT_INST(n, DT_DRV_COMPAT), _sector_count),	\
+		.size = DT_INST_PROP(n, sector_size) *					\
+			UTIL_CAT(DT_INST(n, DT_DRV_COMPAT), _sector_count),		\
+		.buf = UTIL_CAT(DT_INST(n, DT_DRV_COMPAT), _buf),			\
 	}
 
 #define RAMDISK_DEVICE_CONFIG_DEFINE_LOCAL(n)						\
